@@ -28,17 +28,20 @@ end
 
 -- Blink using timer alarm --
 timerId = 2 -- we have seven timers! 0..6
-dly = 1000  -- milliseconds
+dly = 100  -- milliseconds
 ledPin = 4  -- GPIO2
 
 gpio.mode(ledPin,gpio.OUTPUT)
 
-ledState = 0
+ledState = 0 -- used also the safely have the LED off 
 
-tmr.alarm( timerId, dly, 1, function()
-  ledState = 1 - ledState;
-  gpio.write(ledPin, ledState)
-  
+tmr.register( timerId, dly, 1, function()
+    if ledState==-1 then
+        ledState=0;
+        tmr.stop(timerId)
+    end
+    ledState = 1 - ledState;
+    gpio.write(ledPin, ledState)  
 end)
 
 
@@ -49,6 +52,7 @@ tmr.alarm(1,sensor_delay_ms, 1, function()
       tmr.stop(1) 
       dofile("init.lua")
    else 
+        tmr.start(2)
         -- get content of register
         t1 =string.byte( read_reg(0x48, 0x00))
         print("Ambient temperature : "..t1) 
@@ -69,8 +73,9 @@ tmr.alarm(1,sensor_delay_ms, 1, function()
             if (code < 0) then
               print("HTTP request failed")
             else
-              print(code, data)
+              print(code, data)              
             end
+            ledState = -1;
           end)
    end 
 end)
